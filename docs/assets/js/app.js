@@ -208,7 +208,7 @@
     activeCategory = slug;
     
     // Update active class on chips
-    const chips = document.querySelectorAll('.chip-item');
+    const chips = document.querySelectorAll('#category-chips-wrapper .chip-item');
     chips.forEach(chip => {
       if (chip.getAttribute('data-category') === slug) {
         chip.classList.add('active');
@@ -336,6 +336,24 @@
 
     if (!modalBtn || !dialogEl || !gridEl) return;
 
+    function closeModal() {
+      if (dialogEl.close) {
+        dialogEl.close();
+      } else {
+        dialogEl.removeAttribute('open');
+      }
+      document.body.style.overflow = '';
+    }
+
+    function openModal() {
+      if (dialogEl.showModal) {
+        dialogEl.showModal();
+      } else {
+        dialogEl.setAttribute('open', '');
+      }
+      document.body.style.overflow = 'hidden';
+    }
+
     // Render category grid inside modal
     gridEl.innerHTML = categories.map(cat => {
       const coverUrl = cat.cover ? ManifestStore.getThumbnailUrl(cat.cover, 80) : '';
@@ -353,28 +371,29 @@
       item.addEventListener('click', (e) => {
         e.preventDefault();
         const slug = item.getAttribute('data-cat');
+        closeModal();
         selectCategory(slug);
-        if (dialogEl.close) dialogEl.close();
       });
     });
 
-    modalBtn.addEventListener('click', () => {
-      if (dialogEl.showModal) dialogEl.showModal();
-      else dialogEl.setAttribute('open', '');
-    });
+    modalBtn.addEventListener('click', openModal);
 
     if (closeBtn) {
-      closeBtn.addEventListener('click', () => {
-        if (dialogEl.close) dialogEl.close();
-        else dialogEl.removeAttribute('open');
-      });
+      closeBtn.addEventListener('click', closeModal);
     }
 
+    // Backdrop click detection
     dialogEl.addEventListener('click', (e) => {
-      if (e.target === dialogEl) {
-        if (dialogEl.close) dialogEl.close();
-        else dialogEl.removeAttribute('open');
+      const rect = dialogEl.getBoundingClientRect();
+      const isInDialog = (rect.top <= e.clientY && e.clientY <= rect.top + rect.height &&
+                          rect.left <= e.clientX && e.clientX <= rect.left + rect.width);
+      if (!isInDialog) {
+        closeModal();
       }
+    });
+
+    dialogEl.addEventListener('cancel', () => {
+      document.body.style.overflow = '';
     });
   }
 
