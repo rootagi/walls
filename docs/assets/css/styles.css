@@ -1138,6 +1138,16 @@ h1, h2, h3, h4, .font-heading {
   .hero-section {
     padding: 2.25rem 0 1.5rem 0;
   }
+  .category-download-all-btn {
+    padding: 0.5rem;
+    border-radius: 50%;
+    width: 2.25rem;
+    height: 2.25rem;
+    justify-content: center;
+  }
+  .category-download-all-btn span {
+    display: none;
+  }
   .gallery-grid-container {
     columns: 2 150px;
     column-gap: 0.75rem;
