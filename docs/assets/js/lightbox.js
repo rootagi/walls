@@ -148,16 +148,51 @@ const Lightbox = (function () {
 
         const video = document.createElement('video');
         video.className = 'lightbox-media';
-        video.src = cdnUrl;
         video.controls = true;
         video.autoplay = true;
         video.loop = true;
         video.playsInline = true;
+        video.preload = 'metadata';
+
+        const rawUrl = ManifestStore.getRawUrl(file.path);
+        let triedFallback = false;
+
+        video.src = cdnUrl;
 
         video.addEventListener('loadeddata', () => {
           wrapper.classList.remove('loading');
           const spinner = wrapper.querySelector('.spinner');
           if (spinner) spinner.remove();
+        });
+
+        video.addEventListener('error', () => {
+          if (!triedFallback) {
+            triedFallback = true;
+            console.warn('CDN video load failed, retrying with raw GitHub URL...');
+            video.src = rawUrl;
+            video.load();
+          } else {
+            console.error('All video playback sources failed.');
+            wrapper.classList.remove('loading');
+            wrapper.innerHTML = `
+              <div class="video-error-fallback">
+                <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  <circle cx="10" cy="13" r="2"/>
+                  <path d="m20 17-10.5-7.5"/>
+                </svg>
+                <p>Video preview unavailable for direct streaming.</p>
+                <p class="text-xs text-muted">Large video files (~${formatBytes(file.bytes)}) require downloading to play locally.</p>
+                <button class="btn-primary" id="video-fallback-dl-btn">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                  <span>Download Original Video (${formatBytes(file.bytes)})</span>
+                </button>
+              </div>
+            `;
+            const dlBtn = wrapper.querySelector('#video-fallback-dl-btn');
+            if (dlBtn) dlBtn.onclick = () => Gallery.triggerDownload(file, dlBtn);
+          }
         });
 
         wrapper.appendChild(video);
