@@ -6,8 +6,16 @@ const ManifestStore = (function () {
     return htmlRepo || 'dharmx/walls';
   }
 
-  function getCDNUrl(filePath) {
+  function getCDNUrl(filePath, bytes) {
     const repo = getRepoPath();
+    if (bytes === undefined && manifestData && manifestData.files) {
+      const found = manifestData.files.find(f => f.path === filePath);
+      if (found) bytes = found.bytes;
+    }
+    // jsDelivr enforces a strict 20MB limit. Bypass for files >= 19MB using raw GitHub.
+    if (bytes && bytes >= 19 * 1024 * 1024) {
+      return `https://raw.githubusercontent.com/${repo}/main/${filePath}`;
+    }
     return `https://cdn.jsdelivr.net/gh/${repo}@main/${filePath}`;
   }
 
